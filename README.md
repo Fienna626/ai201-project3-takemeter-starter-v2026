@@ -42,6 +42,14 @@
 <!-- Your community, and what your classifier sorts posts into. Three or four
      sentences. -->
 
+TakeMeter sorts comments from **games@lemmy.world**, a Reddit-style gaming
+discussion community, by the kind of opinion they express. Each comment is
+labelled `analysis` (an argument that rests on a specific, checkable fact),
+`hot_take` (a confident claim with no support offered), or `reaction` (the
+writer's own immediate experience or feeling). The classifier is DistilBERT
+fine-tuned on 233 comments I collected and labelled. The goal is to tell
+argued opinions apart from unsupported ones and from personal reactions in a
+community where all three show up in the same thread.
 
 
 ---
@@ -162,17 +170,50 @@ of next unit's variance. -->
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked Claude Code to build `labels.csv` from r/Games.
+- *What came back:* Reddit blocked the scraper (403, then 429 rate-limits). When
+  I pasted three r/Games posts with my labels, Claude pointed out that all three
+  were news headlines, and that a headline doesn't fit any of my labels
+  well: it reports a fact without arguing anything, and it isn't anyone's
+  personal reaction. It suggested collecting comments from games@lemmy.world
+  instead, since the comments are where people actually argue and react.
+- *What I changed:* I switched sources to Lemmy comments. After reading the
+  first batch I saw off-topic comments (politics, movies), so I had it refill
+  the file with game-related comments only, using a keyword filter. I kept my
+  already-labelled rows and deleted the three cold rows I'd marked "not games".
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* While labelling my cold rows, several comments were
+  replies I couldn't understand on their own. I asked Claude to number the
+  rows so I could see which ones were connected.
+- *What came back:* It added `id`, `thread`, `thread_size`, `reply_to` and
+  `post_title` columns by matching each comment back to its Lemmy thread. It
+  also warned that the model only sees `text`, and that comments from the same
+  thread will land in both train and test.
+- *What I changed:* I re-did my 20 cold labels with the post titles visible.
+  Three changed from my first pass, and I recorded each change in the `note`
+  column (rows 3 and 10 became `hot_take`; row 1, which I'd been torn on,
+  became `reaction`). I labelled from the comment text, using the title only
+  to understand what the comment was about.
 
 **Pre-labelling disclosure:**
+
+- **Collection:** Claude Code wrote and ran the script that collected the
+  comments through Lemmy's public API. I chose the community and the
+  "game-related only" rule.
+- **Cold labels (20 rows, `note` = `cold`):** I labelled these myself with no
+  AI suggestions. The only help was the thread/title context columns described
+  in Moment 2.
+- **Pre-labelled (227 rows, `note` starts `pre-labelled`):** Claude pre-labelled
+  these using the staff definitions in `data/staff_taxonomy.md`. It flagged 61
+  as `unsure` and 14 as possible drops. I spot-checked some of the pre-labelled
+  rows and kept the rest as pre-labelled, without reading every one. I deleted
+  all 14 flagged rows (Discord-hack posts, tech-help replies, and image-only or
+  link-only comments) because they broke my "game-related only" rule. That
+  leaves 233 rows. Because I didn't read every pre-label, some of the labels are
+  the AI's judgement rather than mine. That's a known source of noise, and I'll
+  check it against my agreement report next unit.
 
 <!-- ═══════════════════════ UNIT 6 — THE TEST ═══════════════════════
 

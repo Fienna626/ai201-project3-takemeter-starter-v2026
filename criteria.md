@@ -53,11 +53,9 @@ whether you hit them:
 
 ## 1.
 
-<!-- Your criterion. It must name a number. -->
+Held-out accuracy is at least **0.70 on each of the three seeds**.
 
-
-
-**Why this target:**
+**Why this target:** A label cap of 65% makes a majority-label guesser no better than 0.65 accuracy. Reaching 0.70 would be a modest but useful improvement over that baseline on posts the model did not train on.
 
 
 
@@ -65,11 +63,9 @@ whether you hit them:
 
 ## 2.
 
-<!-- Your criterion. -->
+Held-out macro F1 is at least **0.65 on each of the three seeds**.
 
-
-
-**Why this target:**
+**Why this target:** Accuracy can hide weak performance on the less common kind of opinion. Macro F1 gives both labels equal weight, which matters for distinguishing supported opinions from unsupported ones.
 
 
 
@@ -77,11 +73,9 @@ whether you hit them:
 
 ## 3.
 
-<!-- Your criterion. -->
+The held-out F1 for **each label is at least 0.60 on each of the three seeds**.
 
-
-
-**Why this target:**
+**Why this target:** Both labels need to be usable; recognizing only supported claims or only unsupported claims would not help analyze the community's discussion. I chose a lower per-label threshold than the overall target because each test split will contain relatively few examples of each label, making its F1 less stable.
 
 
 
@@ -89,11 +83,9 @@ whether you hit them:
 
 ## 4.
 
-<!-- Your criterion. -->
+In the 200-post dataset, **neither label accounts for more than 65% of the posts**.
 
-
-
-**Why this target:**
+**Why this target:** The model needs enough examples of both supported and unsupported opinions to learn their boundary. A 65% cap leaves at least 70 examples for the less common label, rather than letting the dataset mostly teach one answer.
 
 
 
@@ -101,11 +93,9 @@ whether you hit them:
 
 ## 5.
 
-<!-- Your criterion. -->
+On each seed, the most-confident third of held-out predictions is **at least 0.70 accurate and at least 0.20 more accurate than the least-confident third**.
 
-
-
-**Why this target:**
+**Why this target:** Confidence would be useful if it helped identify predictions that need a human's attention. A clear accuracy gap between the most- and least-confident groups would make that signal meaningful for reviewing borderline posts.
 
 
 
