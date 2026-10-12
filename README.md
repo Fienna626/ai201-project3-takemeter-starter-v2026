@@ -99,19 +99,32 @@ community where all three show up in the same thread.
 <!-- Where you collected from, how you labelled, your counts, and three hard
      cases. -->
 
-**Where the posts came from:**
+**Where the posts came from:** Public comments from **games@lemmy.world**, a
+Reddit-style gaming community, collected on 2026-10-11 through Lemmy's public
+API. I first tried r/Games, but Reddit blocked collection, and most r/Games posts
+are news headlines that don't fit any of my labels. I kept only game-related
+comments, using a keyword filter plus my own judgement, and deleted 17 that
+were off-topic or had no real text: 3 while labelling cold, 14 flagged during
+pre-labelling. Each row keeps its `thread`, `reply_to` and `post_title`, so
+connected comments can be traced. Most comments share a thread with others,
+so the same discussion can appear in both train and test.
 
 **How I labelled them:** <!-- Cold first? Pre-labelled with AI and corrected?
 Say so plainly — the disclosure is required, not penalised. -->
+- **Cold first (20 rows, `note` = `cold`):** I labelled these myself with no
+  AI suggestions.
+- **The rest (213 rows, `note` = `pre-labelled`):** Claude pre-labelled them
+  using the staff definitions. I spot-checked some and kept the rest as
+  pre-labelled. Full disclosure is under How I Used AI.
 
 **Counts per label:**
 
 | Label | Count | Share |
 |---|---|---|
-|  |  |  |
-|  |  |  |
-|  |  |  |
-| **Total** |  | 100% |
+| `hot_take` | 119 | 51.1% |
+| `reaction` | 62 | 26.6% |
+| `analysis` | 52 | 22.3% |
+| **Total** | 233 | 100% |
 
 **Three hard cases**
 
@@ -145,15 +158,29 @@ Say so plainly — the disclosure is required, not penalised. -->
 
 <!-- Your starting model, your settings, and anything you changed and why. -->
 
-**Base model:**
+**Base model:** `distilbert-base-uncased`
 
 **Settings:** <!-- epochs, learning rate, batch size, seed -->
+- 3 epochs, learning rate 2e-5, batch size 16, max length 128 tokens, seed 42.
+- Trained on CPU (torch 2.14.1+cpu). Training took about 45 seconds.
 
-**Anything I changed from the defaults, and why:**
+**Anything I changed from the defaults, and why:** Nothing. I used the
+notebook's defaults.
 
 **Split sizes:** <!-- train / val / test, and per-label counts in the test
 split. If a label had fewer than about 8 in test, say so — it explains a lot
 of next unit's variance. -->
+Train 163, validation 35, test 35.
+
+| Label | Train | Val | Test |
+|---|---|---|---|
+| `analysis` | 36 | 8 | 8 |
+| `hot_take` | 83 | 18 | 18 |
+| `reaction` | 44 | 9 | 9 |
+
+`analysis` (8) and `reaction` (9) are right at the "about 8" line in the test
+split. Their F1 is computed on very few posts, so I expect it to move a lot
+between seeds next unit.
 
 
 
