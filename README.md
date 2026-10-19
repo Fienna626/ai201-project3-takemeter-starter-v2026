@@ -242,6 +242,18 @@ between seeds next unit.
   the AI's judgement rather than mine. That's a known source of noise, and I'll
   check it against my agreement report next unit.
 
+**Moment 3**
+
+- *What I asked for:* I asked Copilot to help interpret the saved confusion
+  matrix and continue the staff-taxonomy labeling exercise.
+- *What came back:* It identified that the seed-42 model predicted `hot_take`
+  for every held-out post, and drafted provisional labels for the 30 staff
+  posts from the written taxonomy.
+- *What I changed:* I recorded the seed-42 confusion pattern in this README.
+  The 30 staff labels are in `my_staff_labels.csv`, but they were drafted with
+  AI assistance and have not been checked against the independent staff answer
+  key; I do not report them as verified staff labels or as an agreement score.
+
 <!-- ═══════════════════════ UNIT 6 — THE TEST ═══════════════════════
 
      Don't fill these in during unit 5.
@@ -262,8 +274,9 @@ between seeds next unit.
 | F1 — `label_two` |  |  |  |
 
 **What I predicted before I looked:**
-<!-- Milestone 1 asks you to write this BEFORE seeing the trained numbers. A
-     prediction made afterwards isn't one. -->
+I expect the fine-tuned model to beat the zero-shot baseline overall,
+especially on `hot_take`, because it has learned the distinctions from
+examples in this gaming-comment dataset.
 
 **What the gap actually means:**
 <!-- If the baseline matched your trained model, your fine-tuning added
@@ -280,27 +293,29 @@ between seeds next unit.
 
 | Criterion | Target | Seed 42 | Seed 7 | Seed 2024 | Verdict |
 |---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+| 1. Held-out accuracy | ≥ 0.70 | 0.514 | Not run | Not run | MISSED |
+| 2. Held-out macro F1 | ≥ 0.65 | 0.226 | Not run | Not run | MISSED |
+| 3. F1 for each label | ≥ 0.60 each | `analysis` 0.000; `hot_take` 0.679; `reaction` 0.000 | Not run | Not run | MISSED |
+| 4. No label exceeds 65% of the dataset | ≤ 65% | 51.1% max (`hot_take`, 119/233; dataset-level) | Same dataset | Same dataset | MET |
+| 5. Confidence: most-confident third ≥ 0.70 accurate and ≥ 0.20 above least-confident third | Both conditions on each seed | 0.909 most; 0.273 least; gap 0.636 | Not run | Not run | MISSED |
 
 ### Confusion matrix
 
 <!-- ⚠️ TYPED AS A MARKDOWN TABLE. The notebook prints one ready to paste.
      An image of a matrix earns nothing. -->
 
-| true \ predicted |  |  |  |
-|---|---|---|---|
-| **** |  |  |  |
-| **** |  |  |  |
-| **** |  |  |  |
+Seed 42 (`results.json`; 35 held-out posts):
+
+| true \ predicted | analysis | hot_take | reaction |
+|---|---:|---:|---:|
+| **analysis** | 0 | 8 | 0 |
+| **hot_take** | 0 | 18 | 0 |
+| **reaction** | 0 | 9 | 0 |
 
 **My biggest off-diagonal number, and what it means:**
-<!-- Not "the model made mistakes" — WHICH boundary it didn't learn, and which
-     direction. "7 real analysis posts were called hot_take and only 3 went the
-     other way" is a direction, not just an error rate. -->
+The largest off-diagonal is 9 real `reaction` posts called `hot_take`, with
+zero `hot_take` posts called `reaction`; in this seed the model predicted
+`hot_take` for every test post and did not distinguish either other label.
 
 
 
@@ -313,13 +328,27 @@ between seeds next unit.
 
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+| 1 | Held-out accuracy | ≥ 0.70 on each seed | MISSED | Seed 42 was 0.514, below target. Seeds 7 and 2024 were not run. |
+| 2 | Held-out macro F1 | ≥ 0.65 on each seed | MISSED | Seed 42 was 0.226, below target. Seeds 7 and 2024 were not run. |
+| 3 | F1 for each label | ≥ 0.60 on each seed | MISSED | Seed 42 had F1 0.000 for `analysis` and `reaction`; `hot_take` was 0.679. |
+| 4 | Label balance | No label above 65% | MET | `labels.csv` has 233 posts; the largest class is `hot_take` at 119/233 (51.1%). |
+| 5 | Confidence signal | On each seed, top third ≥ 0.70 accurate and ≥ 0.20 above bottom third | MISSED | Seed 42 passed (0.909 top-third accuracy; 0.273 bottom-third; gap 0.636), but seeds 7 and 2024 were not run, so the three-seed target was not demonstrated. |
 
 **Diagnoses**
+
+The available `results.json` records only seed 42; `results_three_seeds_before.json`
+is not available, so there is no three-seed spread. Accuracy, macro F1, and
+per-label F1 all miss their targets on seed 42. The confusion matrix shows the
+model predicted `hot_take` for all 35 test posts: 18 were correct, while all 8
+`analysis` posts and all 9 `reaction` posts were misclassified. Those two
+classes have few test examples, so their estimates are unstable, but the
+one-class prediction pattern is also evidence of model collapse on this split.
+It does not establish whether the underlying cause is inconsistent training
+labels, a genuinely hard boundary, or a task the model cannot learn from this
+dataset. The independent staff labels and agreement check are unavailable, so
+there is no evidence to diagnose a labeling problem. The confidence criterion
+passed on seed 42, but is marked MISSED in the run log because the required
+seeds 7 and 2024 were not run and the all-seed target was not demonstrated.
 
 <!-- For each miss: the cause, and how you know. The four common causes are:
      too few examples for a label, a boundary you applied inconsistently, a
@@ -342,7 +371,15 @@ between seeds next unit.
      data/staff_taxonomy.md, not your own — so every argument below is made
      from those definitions and those decision rules. -->
 
-**Agreement rate:** ___ / 30 = ___%
+**Status: provisional — the staff repository was not working, so I could not
+obtain `data/staff_labels.csv`.**
+
+I labelled all 30 posts in `my_staff_labels.csv` under the staff taxonomy:
+10 `analysis`, 10 `hot_take`, and 10 `reaction`. I verified that every text
+matches `data/staff_posts.csv` exactly. Without the staff answer-key CSV, I
+could not run the comparison, calculate an agreement rate, or identify
+disagreements. I am treating these as my own provisional labels, not as
+verified staff answers.
 
 <!-- Nobody grades this number. A 60% who argues every disagreement from the
      stated rules beats a 95% who wrote "staff was right" nine times. Several
@@ -351,61 +388,43 @@ between seeds next unit.
 
 **Disagreements**
 
-<!-- Three lines each: the post, both labels, and who you think is right and
-     why — grounded in the staff definitions you were both applying.
-
-     Then sort each into one of three piles:
-       (a) the rule covered it and I applied it loosely → a consistency problem
-       (b) the rule genuinely doesn't say               → a gap in the definitions
-       (c) the rule is ambiguous here and my reading is defensible → argue it.
-           This is a legitimate win.
-
-     Pile (a) is the one that matters most for your diagnosis: if you applied a
-     written rule two different ways on 30 posts, that is direct evidence about
-     what you did across your own 200. -->
-
-**1.**
-> *The post:*
->
-> *Staff said / I said:*
->
-> *My call, and why:*
->
-> *Which pile:*
-
-**2.**
-> *The post:*
->
-> *Staff said / I said:*
->
-> *My call, and why:*
->
-> *Which pile:*
+Not available yet. Without the staff labels there are no independently
+identified disagreements to adjudicate or sort into piles (a), (b), and (c).
+Comparing my labels to themselves would not be an agreement check.
 
 **What the pattern in my disagreements tells me:**
 
+Pending the independent staff labels; no disagreement pattern can be diagnosed
+yet.
 
 
 ---
 
 ## The Improvement
 
-**What I changed:**
+**Status: pending — no improvement has been applied or evaluated yet.**
 
-**Which diagnosis pointed at it:**
+The only saved training result is seed 42, and the three-seed before run is
+missing. That run shows the model predicted `hot_take` for every test post, but
+it is not enough to distinguish a training-setting problem from a data or label
+problem. The staff answer key and agreement check are also unavailable, so I
+cannot justify relabelling a boundary from agreement evidence. I will first
+need a working project environment and a complete three-seed before run before
+choosing one evidence-based improvement.
 
 ### Run Log — After
 
 | Criterion | Target | Seed 42 | Seed 7 | Seed 2024 | Verdict |
 |---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+| 1. Held-out accuracy | ≥ 0.70 | Not run | Not run | Not run | Not run |
+| 2. Held-out macro F1 | ≥ 0.65 | Not run | Not run | Not run | Not run |
+| 3. F1 for each label | ≥ 0.60 each | Not run | Not run | Not run | Not run |
+| 4. No label exceeds 65% of the dataset | ≤ 65% | Not rechecked | Not rechecked | Not rechecked | Not run |
+| 5. Confidence: most-confident third ≥ 0.70 accurate and ≥ 0.20 above least-confident third | Both conditions on each seed | Not run | Not run | Not run | Not run |
 
 **Did it help, and how do I know:**
 
+Not evaluated. No improvement or three-seed after run has been completed.
 <!-- If it didn't, say so. Relabelling that didn't help is a genuinely
      interesting result and earns full credit. -->
 
@@ -417,13 +436,47 @@ between seeds next unit.
 
 <!-- For each criterion still missed: what you'd do, and why you stopped. -->
 
+**Criterion 1 — held-out accuracy ≥ 0.70 on every seed:** Seed 42 reached
+0.514. I would run sections 6's seeds 7 and 2024 before drawing a three-seed
+conclusion, then select one improvement supported by that complete run. I
+stopped because the project environment still blocks NumPy's compiled
+extension, and the notebook runner did not execute cells with the selected
+kernel.
 
+**Criterion 2 — held-out macro F1 ≥ 0.65 on every seed:** Seed 42 reached
+0.226. I would collect all three seed results and compare the per-label scores
+and confusion matrices to see whether this is stable or seed-specific. I
+stopped for the same environment and notebook-kernel blockers; only one
+seed's result is saved.
+
+**Criterion 3 — F1 ≥ 0.60 for every label on every seed:** Seed 42 gave
+`analysis` and `reaction` F1 scores of 0.000, while `hot_take` was 0.679.
+Their supports were only 8 and 9 test posts, so I would first inspect a valid
+three-seed run and, once available, the independent staff agreement results;
+then I would consider adding carefully labeled examples to a thin class. I
+stopped because the other seed results and staff answer key are unavailable,
+so I cannot distinguish low support from a label-boundary or training issue.
+
+**Criterion 5 — confidence target on every seed:** Seed 42 met both thresholds
+(0.909 accuracy in the most-confident third, 0.273 in the least-confident
+third, a 0.636 gap). I would check the same measures on seeds 7 and 2024. I
+stopped because those seeds have not been run, so the across-seed target is
+not established.
+
+Criterion 4 (label balance) is met: the largest class is 51.1% of the 233-row
+dataset.
 
 **The gap between what I meant my labels to capture and what the model
 learned:**
-<!-- Two sentences. Your confusion matrix is the evidence. -->
+I meant the labels to distinguish evidence-backed `analysis`, unsupported
+`hot_take`, and personal `reaction`, but on seed 42 the model predicted
+`hot_take` for all 35 held-out posts. The matrix shows all 8 `analysis` and all
+9 `reaction` posts were called `hot_take` (while 18 `hot_take` posts were
+correct), so this run learned the majority response rather than the intended
+three-way distinctions.
 
-
+**Repository URL for this unit (same existing fork):**
+https://github.com/Fienna626/ai201-project3-takemeter-starter-v2026
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
